@@ -1,14 +1,20 @@
 import express, {type Request,type Response,type NextFunction } from 'express';
 import { type IError } from './interfaces/error.interface';
-import {prisma} from "../prisma/prisma";
+import handlePrismaError from './helpers/handlePrismaError';
+import authRouter from './routes/api/users';
+import booksRouter from './routes/api/books';
 
 const app = express();
 app.use(express.json());
 
 
-app.get('/', async (_: Request, res: Response) => {
-   const users = await prisma.user.findMany();
-  res.status(200).json(users);
+app.use('/api/users', authRouter);
+app.use('/api/books', booksRouter);
+
+app.use(handlePrismaError);
+
+app.get('/', (_, res) => {
+  res.status(200).send('✅ Book Reader backend is running');
 });
 
 app.use((_: Request, res: Response) => {
