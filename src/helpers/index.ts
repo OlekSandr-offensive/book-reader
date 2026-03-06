@@ -1,9 +1,5 @@
-import ctrlWrapper from "./ctrlWrapper";
-import RequestError from "./RequestError";
-import handlePrismaError from "./handlePrismaError";
+export { ctrlWrapper } from "./ctrlWrapper";
+export { RequestError } from "./RequestError";
+export { handlePrismaError } from "./handlePrismaError";
+export { createTokens } from "./createTokens";
 
-export default{
-    ctrlWrapper,
-    RequestError,
-    handlePrismaError,
-}

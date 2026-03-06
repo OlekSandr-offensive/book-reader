@@ -1,9 +1,9 @@
 import { type Request, type Response } from 'express';
 import prisma from '../../../prisma/prisma';
 import bcrypt from 'bcryptjs';
-import RequestError from '../../helpers/RequestError';
+import { RequestError } from '../../helpers';
 
-const register = async (req: Request, res: Response) => {
+const signup = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -17,17 +17,20 @@ const register = async (req: Request, res: Response) => {
   }
   const hashPassword = await bcrypt.hash(password, 10);
   const result = await prisma.user.create({
-    data: { name, email, password: hashPassword },
+    data: { name, email, password: hashPassword, refreshToken: null },
   });
 
   res.status(201).json({
-    message: 'Registration successful',
-    user: {
-      id: result.id,
-      name: result.name,
-      email: result.email,
+    status: 'success',
+    message: 'User registered successfully',
+    data: {
+      user: {
+        id: result.id,
+        email: result.email,
+        createdAt: result.createdAt,
+      },
     },
   });
 };
 
-export default register;
+export { signup };

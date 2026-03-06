@@ -1,15 +1,16 @@
-import app from "./app";
-import prisma from "../prisma/prisma";
+import 'dotenv/config';
+import prisma from '../prisma/prisma';
+import app from './app';
+import config from './config';
 
-const {PORT} = process.env;
-
-prisma.$connect()
+prisma
+  .$connect()
   .then(() => {
-    app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    app.listen(config.PORT, () => {
+      console.log(`Server is running on port ${config.PORT}`);
     });
   })
   .catch((error) => {
     console.error(error.message);
     process.exit(1);
-  }); 
+  });

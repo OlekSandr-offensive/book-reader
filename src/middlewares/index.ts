@@ -1,7 +1,3 @@
-import validationBody from "./validationBody";
-import authenticate from "./authenticate";
-
-export default {
-    validationBody,
-    authenticate,
-};
+export { validationBody } from './validationBody';
+export { authenticate } from './authenticate';
+export { isValidId } from './isValidId';

@@ -40,4 +40,4 @@ const handlePrismaError = (
   next(err);
 };
 
-export default handlePrismaError;
+export { handlePrismaError };

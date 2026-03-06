@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { type Schema } from 'joi';
-import  RequestError  from '../helpers/RequestError';
+import { RequestError } from '../helpers';
 
 const validationBody = (schema: Schema) => {
   return (req: Request, _res: Response, next: NextFunction) => {
@@ -14,4 +14,4 @@ const validationBody = (schema: Schema) => {
   };
 };
 
-export default validationBody;
+export { validationBody };

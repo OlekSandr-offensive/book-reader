@@ -13,38 +13,136 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  createdAt DateTime @default(now())
+// =========================
+// ENUMS
+// =========================
 
-  books    Book[]
-  progress ReadingProgress[]
+enum BookStatus {
+  PLAN
+  READING
+  DONE
 }
+
+enum TrainingStatus {
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
+}
+
+// =========================
+// USER
+// =========================
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  name         String
+
+  refreshToken String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  books        Book[]
+  trainings    Training[]
+  progress     DailyProgress[]
+}
+
+// =========================
+// BOOK (Library Entity)
+// =========================
 
 model Book {
-  id       Int      @id @default(autoincrement())
-  title    String
-  author   String
-  year     Int
-  text     String
-  userId   Int
-  user     User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id          Int        @id @default(autoincrement())
+  userId      Int
 
-  progress ReadingProgress[]
+  title       String
+  author      String
+  year        Int
+  totalPages  Int
+
+  status      BookStatus @default(PLAN)
+
+  rating      Float?     // allowed only if DONE
+  resume      String?    @db.Text
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trainings   TrainingBook[]
+  progress    DailyProgress[]
+
+  @@index([userId])
+  @@index([status])
 }
 
-model ReadingProgress {
-  id       Int      @id @default(autoincrement())
-  userId   Int
-  bookId   Int
-  position Int      @default(0) // позиція читання
-  updatedAt DateTime @updatedAt
+// =========================
+// TRAINING (Reading Program)
+// =========================
 
-  user User @relation(fields: [userId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
+model Training {
+  id           Int             @id @default(autoincrement())
+  userId       Int
+
+  startDate    DateTime
+  finishDate   DateTime
+  durationDays Int
+
+  status       TrainingStatus  @default(IN_PROGRESS)
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books        TrainingBook[]
+  progress     DailyProgress[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// =========================
+// TRAINING <-> BOOK RELATION
+// =========================
+
+model TrainingBook {
+  id         Int @id @default(autoincrement())
+  trainingId Int
+  bookId     Int
+
+  isFinished Boolean @default(false)
+
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([trainingId, bookId])
+  @@index([trainingId])
+  @@index([bookId])
+}
+
+// =========================
+// DAILY PROGRESS (Analytics Engine)
+// =========================
+
+model DailyProgress {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  trainingId Int
+  bookId     Int
+
+  date       DateTime
+  pagesRead  Int
+
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  training   Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([trainingId])
+  @@index([bookId])
+  @@index([date])
 }
 
