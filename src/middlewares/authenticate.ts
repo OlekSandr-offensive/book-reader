@@ -21,6 +21,7 @@ const authenticate = async (req: Request, _: Response, next: NextFunction) => {
     next();
   } catch (error) {
     next(RequestError(401, 'Invalid token'));
+    console.error(error);
   }
 };
 

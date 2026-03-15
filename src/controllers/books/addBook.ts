@@ -18,16 +18,7 @@ const addBook = async (req: Request, res: Response) => {
   res.status(201).json({
     status: 'success',
     message: 'Book created',
-    data: {
-      book: {
-        id: book.id,
-        title: book.title,
-        author: book.author,
-        totalPages: book.totalPages,
-        status: book.status,
-        createdAt: book.createdAt,
-      },
-    },
+    data: { book },
   });
 };
 

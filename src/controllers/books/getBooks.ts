@@ -7,7 +7,7 @@ const getBooks = async (req: Request, res: Response) => {
   const { page = 1, limit = 20 } = req.query;
   const userId = Number(owner);
   const pageNum = Number(page) || 1;
-  const limitNum = Number(limit) || 20;
+  const limitNum = Math.min(Number(limit) || 20, 100);
   const skip = (pageNum - 1) * limitNum;
 
   if (!owner || Number.isNaN(userId)) {
@@ -21,6 +21,7 @@ const getBooks = async (req: Request, res: Response) => {
   });
 
   const totalBooks = await prisma.book.count({ where: { userId } });
+  const totalQueryPages = Math.ceil(totalBooks / limitNum);
 
   res.status(200).json({
     status: 'success',
@@ -36,6 +37,7 @@ const getBooks = async (req: Request, res: Response) => {
     },
     meta: {
       total: totalBooks,
+      totalQueryPages: totalQueryPages,
       page: pageNum,
       limit: limitNum,
       hasNextPage: skip + books.length < totalBooks,

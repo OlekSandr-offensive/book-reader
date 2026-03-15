@@ -1,5 +1,7 @@
 import { type Request, type Response } from 'express';
 import prisma from '../../../prisma/prisma';
+import dayjs from 'dayjs';
+import { RequestError } from '../../helpers';
 
 const startTraining = async (req: Request, res: Response) => {
   const { id: userId } = req.user;
@@ -13,21 +15,17 @@ const startTraining = async (req: Request, res: Response) => {
   });
 
   if (existingTraining) {
-    return res.status(400).json({
-      status: 'error',
-      message: 'Training already active',
-    });
+    throw RequestError(400, 'You already have an active training');
   }
-
-  const durationDays = Math.ceil(
-    (+new Date(finishDate) - +new Date(startDate)) / (1000 * 60 * 60 * 24),
-  );
+  const startTraining = dayjs(startDate).startOf('day');
+  const finishTraining = dayjs(finishDate).endOf('day');
+  const durationDays = finishTraining.diff(startTraining, 'day') + 1;
 
   const training = await prisma.training.create({
     data: {
       userId,
-      startDate: new Date(startDate),
-      finishDate: new Date(finishDate),
+      startDate: startTraining.toDate(),
+      finishDate: finishTraining.toDate(),
       durationDays,
       status: 'IN_PROGRESS',
       books: {
@@ -35,9 +33,6 @@ const startTraining = async (req: Request, res: Response) => {
           book: { connect: { id: bookId } },
         })),
       },
-    },
-    include: {
-      books: true,
     },
   });
 

@@ -8,17 +8,13 @@ import {
   currentUser,
 } from '../../controllers/auth';
 import { authenticate, validationBody } from '../../middlewares';
-import { registerSchema, loginSchema, refreshTokenSchema } from '../../schemas';
+import { registerSchema, loginSchema } from '../../schemas';
 
 const router = express.Router();
 
 router.post('/login', validationBody(loginSchema), ctrlWrapper(login));
 
-router.post(
-  '/refresh',
-  validationBody(refreshTokenSchema),
-  ctrlWrapper(refreshToken),
-);
+router.post('/refresh', ctrlWrapper(refreshToken));
 
 router.post('/signup', validationBody(registerSchema), ctrlWrapper(signup));
 

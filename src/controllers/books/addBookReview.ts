@@ -1,29 +1,28 @@
 import { type Request, type Response } from 'express';
 import prisma from '../../../prisma/prisma';
+import { RequestError } from '../../helpers';
 
 const addBookReview = async (req: Request, res: Response) => {
   const { id: userId } = req.user;
-  const { id: bookId } = req.params;
+  const bookId = Number(req.params.id);
   const { rating, resume } = req.body;
 
   const book = await prisma.book.findFirst({
     where: {
-      id: Number(bookId),
-      userId: Number(userId),
+      id: bookId,
+      userId: userId,
     },
   });
   if (!book) {
-    return res.status(404).json({ message: 'Book not found' });
+    throw RequestError(404, 'Book not found');
   }
 
   if (book.status !== 'DONE') {
-    return res
-      .status(400)
-      .json({ message: 'You can review only finished books' });
+    throw RequestError(400, 'You can review only finished books');
   }
 
   const updatedBook = await prisma.book.update({
-    where: { id: Number(bookId) },
+    where: { id: bookId },
     data: {
       rating,
       resume,
@@ -32,7 +31,9 @@ const addBookReview = async (req: Request, res: Response) => {
 
   res.status(200).json({
     status: 'success',
-    data: { updatedBook },
+    data: {
+      book: { updatedBook },
+    },
   });
 };
 

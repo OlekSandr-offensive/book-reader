@@ -20,9 +20,14 @@ const router = express.Router();
 
 router.get('/', authenticate, ctrlWrapper(getBooks));
 
-router.get('/:id', isValidId, ctrlWrapper(getBookById));
+router.get('/:id', authenticate, isValidId, ctrlWrapper(getBookById));
 
-router.get('/:id/progress', isValidId, ctrlWrapper(getBookProgress));
+router.get(
+  '/:id/progress',
+  authenticate,
+  isValidId,
+  ctrlWrapper(getBookProgress),
+);
 
 router.patch(
   '/:id',

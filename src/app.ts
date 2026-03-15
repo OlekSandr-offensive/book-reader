@@ -6,11 +6,14 @@ import express, {
 import cors from 'cors';
 import logger from 'morgan';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
 
 import authRouter from './routes/api/auth';
 import booksRouter from './routes/api/books';
+import trainingRouter from './routes/api/training';
 import HttpError from './helpers/HttpError';
 import { handlePrismaError } from './helpers';
+import { swaggerConfig } from './docs';
 
 const app = express();
 
@@ -21,8 +24,17 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
+app.use(
+  '/swagger',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerConfig, {
+    swaggerOptions: { persistAuthorization: true, filter: true },
+    customSiteTitle: 'Book Reader API Docs',
+  }),
+);
 app.use('/api/auth', authRouter);
 app.use('/api/books', booksRouter);
+app.use('/api/training', trainingRouter);
 
 app.get('/', (_, res) => {
   res.status(200).send('✅ Book Reader backend is running');

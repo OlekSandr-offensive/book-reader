@@ -6,25 +6,31 @@ import {
   addDailyProgress,
   getTrainingStats,
 } from '../../controllers/training';
-import { authenticate, validationBody } from '../../middlewares';
+import { authenticate, isValidId, validationBody } from '../../middlewares';
 import { trainingSchema, addDailyProgressSchema } from '../../schemas';
 
 const router = express.Router();
 
 router.get('/current', authenticate, ctrlWrapper(getCurrentTraining));
 
-router.get('/:id/stats', authenticate, ctrlWrapper(getTrainingStats));
+router.get(
+  '/:id/stats',
+  authenticate,
+  isValidId,
+  ctrlWrapper(getTrainingStats),
+);
 
 router.post(
-  '/start',
+  '/',
   authenticate,
   validationBody(trainingSchema),
   ctrlWrapper(startTraining),
 );
 
 router.post(
-  '/progress',
+  '/:id/progress',
   authenticate,
+  isValidId,
   validationBody(addDailyProgressSchema),
   ctrlWrapper(addDailyProgress),
 );

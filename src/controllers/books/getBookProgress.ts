@@ -1,24 +1,25 @@
 import { type Request, type Response } from 'express';
 import prisma from '../../../prisma/prisma';
+import { RequestError } from '../../helpers';
 
 const getBookProgress = async (req: Request, res: Response) => {
   const { id: userId } = req.user;
-  const { id: bookId } = req.params;
+  const bookId = Number(req.params.id);
 
   const book = await prisma.book.findFirst({
     where: {
-      userId: Number(userId),
-      id: Number(bookId),
+      userId: userId,
+      id: bookId,
     },
   });
 
   if (!book) {
-    return res.status(404).json({ message: 'Book not found' });
+    throw RequestError(404, 'Book not found');
   }
 
   const progress = await prisma.dailyProgress.aggregate({
     _sum: { pagesRead: true },
-    where: { bookId: Number(bookId) },
+    where: { bookId: bookId },
   });
 
   const pagesRead = progress._sum.pagesRead || 0;

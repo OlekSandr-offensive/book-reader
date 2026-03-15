@@ -1,10 +1,60 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import prisma from '../../../prisma/prisma';
 import { RequestError } from '../../helpers';
 
 const addDailyProgress = async (req: Request, res: Response) => {
   const { id: userId } = req.user;
-  const { trainingId, bookId, pagesRead } = req.body;
+  const trainingId = Number(req.params.id);
+  const { bookId, pagesRead } = req.body;
+
+  const trainingBook = await prisma.trainingBook.findUnique({
+    where: {
+      trainingId_bookId: { trainingId, bookId },
+    },
+    select: {
+      isFinished: true,
+      countReadPage: true,
+      book: {
+        select: { totalPages: true },
+      },
+    },
+  });
+
+  if (!trainingBook) {
+    throw RequestError(404, 'Training not found');
+  }
+
+  if (trainingBook.isFinished) {
+    throw RequestError(
+      400,
+      'Book is already marked as finished in this training',
+    );
+  }
+
+  if (!trainingBook.book) {
+    throw RequestError(404, 'Book not found');
+  }
+
+  const countPage = trainingBook.countReadPage + pagesRead;
+  const totalPages = trainingBook.book.totalPages;
+
+  if (countPage > totalPages) {
+    throw RequestError(
+      400,
+      `Pages read cannot exceed total pages of the book (${totalPages})`,
+    );
+  }
+
+  await prisma.trainingBook.update({
+    where: {
+      trainingId_bookId: { trainingId, bookId },
+    },
+    data: {
+      countReadPage: { increment: pagesRead },
+    },
+  });
+
+  const now = new Date();
 
   const progress = await prisma.dailyProgress.create({
     data: {
@@ -12,41 +62,51 @@ const addDailyProgress = async (req: Request, res: Response) => {
       trainingId,
       bookId,
       pagesRead,
-      date: new Date(),
+      date: now,
     },
   });
 
-  const aggregation = await prisma.dailyProgress.aggregate({
-    where: { trainingId },
-    _sum: { pagesRead: true },
-  });
+  let bookFinished = false;
+  let trainingFinished = false;
 
-  const totalRead = aggregation._sum.pagesRead ?? 0;
+  if (countPage >= totalPages) {
+    bookFinished = true;
 
-  const book = await prisma.book.findUnique({
-    where: {
-      id: bookId,
-    },
-  });
+    await prisma.trainingBook.update({
+      where: {
+        trainingId_bookId: {
+          trainingId,
+          bookId,
+        },
+      },
+      data: {
+        isFinished: true,
+        book: {
+          update: { status: 'DONE' },
+        },
+      },
+    });
 
-  if (!book) {
-    throw RequestError(404, 'Book not found');
+    const remainingBooks = await prisma.trainingBook.count({
+      where: { trainingId, isFinished: false },
+    });
+
+    if (remainingBooks === 0) {
+      trainingFinished = true;
+
+      await prisma.training.update({
+        where: { id: trainingId },
+        data: { status: 'COMPLETED' },
+      });
+    }
   }
 
-  if (totalRead >= book.totalPages) {
-    await prisma.book.update({
-      where: { id: bookId },
-      data: { status: 'DONE' },
-    });
-    await prisma.trainingBook.updateMany({
-      where: { trainingId, bookId },
-      data: { isFinished: true },
-    });
-  }
-
-  return res.json({
+  return res.status(200).json({
     status: 'success',
+    trainingFinished,
+    bookFinished,
     data: { progress },
   });
 };
+
 export { addDailyProgress };

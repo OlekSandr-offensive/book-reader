@@ -22,7 +22,7 @@ const signup = async (req: Request, res: Response) => {
 
   res.status(201).json({
     status: 'success',
-    message: 'User registered successfully',
+    message: 'Signup successfully',
     data: {
       user: {
         id: result.id,
